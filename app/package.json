@@ -1,0 +1,90 @@
+{
+  "name": "app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@citation-js/plugin-isbn": "^0.4.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fontsource/roboto": "^5.1.1",
+    "@fontsource/ubuntu": "^5.1.1",
+    "@geoman-io/leaflet-geoman-free": "^2.18.1",
+    "@mdi/js": "^7.4.47",
+    "@mui/icons-material": "^6.4.0",
+    "@mui/lab": "^6.0.0-beta.30",
+    "@mui/material": "^6.4.7",
+    "@mui/x-data-grid": "^7.23.6",
+    "@mui/x-date-pickers": "^7.23.6",
+    "@react-keycloak/web": "^3.4.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "axios": "^1.7.9",
+    "citation-js": "^0.7.18",
+    "cytoscape": "^3.31.0",
+    "cytoscape-dagre": "^2.5.0",
+    "dagre": "^0.8.5",
+    "date-fns": "^4.1.0",
+    "diff2html": "^3.4.51",
+    "dotenv": "^16.4.7",
+    "easymde": "2.20",
+    "keycloak-js": "^23.0.5",
+    "leaflet": "^1.9.4",
+    "leaflet.gridlayer.googlemutant": "^0.15.0",
+    "leaflet.locatecontrol": "^0.83.1",
+    "lodash": "^4.17.21",
+    "ol": "^10.4.0",
+    "proj4": "^2.15.0",
+    "react": "^19.0.0",
+    "react-device-detect": "^2.2.3",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.5",
+    "react-icons": "^5.5.0",
+    "react-leaflet": "^5.0.0",
+    "react-leaflet-google-layer": "4.0",
+    "react-markdown": "^10.0.0",
+    "react-router-dom": "^7.1.5",
+    "react-simplemde-editor": "^5.2.0",
+    "remark-gfm": "^4.0.1",
+    "uuid": "^11.0.5",
+    "vite": "^6.0.7",
+    "web-vitals": "^4.2.4",
+    "xlsx": "^0.18.5",
+    "zustand": "^5.0.3"
+  },
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/parser": "^7.26.9",
+    "@babel/traverse": "^7.26.9",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "happy-dom": "^17.1.8",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.7"
+  }
+}

@@ -1,0 +1,33 @@
+    location / {
+        proxy_pass http://10.1.1.24:8082;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /ws {
+        proxy_pass http://10.1.1.24:8082;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+# Custom api
+location /upload/ {
+    proxy_pass http://10.1.1.24:3003/;
+    proxy_redirect http://10.1.1.24:3003/ /upload;
+    proxy_set_header    X-Script-Name           /upload;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+# Custom mediaserver
+location /resources/ {
+    proxy_pass http://10.1.1.24:3004/;
+    proxy_redirect http://10.1.1.24:3004/ /resources;
+    proxy_set_header    X-Script-Name           /resources;
+}

@@ -1,0 +1,177 @@
+html,body,h1,h2,h3,h4,h5 {
+  font-family: "Raleway", sans-serif
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+h5 {
+  display: inline-block;
+}
+
+* {box-sizing: border-box;}
+
+:root {
+  --top-bar-height: 43px;
+  --header-height: 39px;
+  --bottom-menu-height: 55px;
+}
+
+#map, #cy, #relationships {
+  width: 40vw; 
+}
+
+.halfheight {
+  height: calc(70vh - 130px);
+}
+.thirtyheight {
+  height: 30vh;
+}
+.fill-most {
+  height: calc(100vh - 285px);
+  overflow: auto;
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.fill-most::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+.sheet-element{
+  min-height: 100%;
+  width: 100%;
+}
+.rolling-element{
+  width: 100%;
+}
+.sheet-container{
+  height: 100%;
+  width: 100%;
+}
+
+.hidden-scrollbar {
+  overflow: auto;
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+.fill-main {
+  height: calc(100vh - var(--top-bar-height) - var(--header-height) - var(--bottom-menu-height));
+  padding: 1em;
+  overflow: auto;
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.fill-main::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+.fill-main .fill-main {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.fill-main-mobile {
+  height: 100%;
+  overflow: hidden;
+}
+
+.main-container {
+  margin-left: 200px;
+  margin-top: var(--top-bar-height); 
+  height: calc(100vh - var(--top-bar-height) - var(--bottom-menu-height));
+}
+
+.page-content-mobile {
+  height: calc(100vh - var(--top-bar-height) - var(--header-height) - var(--bottom-menu-height));
+  overflow: hidden;
+  width: 100%;
+}
+
+#main .row {
+  padding: 0 1rem;
+}
+#main .row [class^=col] {
+  padding: 0;
+}
+.fourtywidth {
+  width: 40%;
+  display: inline-block;
+}
+.thirtywidth {
+  width: 30%;
+}
+.fiftywidth {
+  width: 50%;
+}
+.threequarterwidth {
+  width: 75%;
+}
+
+.touchMenu {
+  width: 70px;
+  font-size: 36px!important;
+  border-radius: 32px;
+}
+.mouseMenu {
+  width: 50px;
+  font-size: 24px!important;
+  border-radius: 16px;
+}
+.rightMenu, .leftMenu {
+  padding: 5px 0px;
+  z-index: 1200;
+  opacity: 0.6;
+}
+.rightMenu:hover, .leftMenu:hover {
+  opacity: 1;
+}
+.leftMenu {
+  position:absolute;
+  top:50%;
+  left:0%;
+  transform:translate(0%,-50%);
+  -ms-transform:translate(-0%,-50%);
+  margin-left: 170px;
+  transition:margin-left .4s
+}
+
+.greyscale-icon {
+  filter: grayscale(100%);
+  opacity: 0.6; /* Adjust opacity to make it paler */
+}
+
+.w3-left, .w3-right {cursor:pointer}
+
+/* Diff2html custom styling */
+.d2h-wrapper {
+  text-align: left;
+  transform: translateZ(0);
+}
+
+
+@media (max-width:992px){.leftMenu{margin-left: 20px;}}
+
+@media only screen and (max-width: 1450px) {
+  .fourtywidth, .thirtywidth{
+    width: 50%;
+  }
+  .threequarterwidth, .fiftywidth{
+  width: 100%;
+}
+}
+
+@media only screen and (max-width: 763px) {
+  .fourtywidth, .thirtywidth, .sm-full, .threequarterwidth {
+    width: 100%;
+  }
+  #cy, #map, #relationships {
+    width: 100%;
+    height: 50vh;
+  }
+}

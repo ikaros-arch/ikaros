@@ -1,0 +1,66 @@
+location /pgadmin/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:5050/;
+    proxy_set_header    X-Script-Name           /pgadmin;
+}
+# Keycloak
+location /auth/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:8180/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:8180/ /auth;
+    proxy_set_header    X-Script-Name          /auth;
+
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Real-IP $remote_addr;
+        
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $http_host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+# extended buffer size to avoid 502 bad gateway error when registering new users
+    proxy_buffer_size          128k;
+    proxy_buffers              4 256k;
+    proxy_busy_buffers_size    256k;
+        
+    # the following headers are needed, if your application uses redirection flow to authenticate with Keycloak. 
+    # NB: as long as KC is itself setting CORS, this messes it all up...
+    # replace localhost:8084 with the application server url
+    # add_header Content-Security-Policy "frame-src *; frame-ancestors *; object-src *;";
+    #  add_header Access-Control-Allow-Origin 'http://prisonweb02fl.unicph.domain:8180'; 
+    # add_header Access-Control-Allow-Credentials true;
+}
+#location /proxy/ {
+    # proxy_pass http://prisonweb02fl.unicph.domain:81/;
+    # proxy_redirect http://prisonweb02fl.unicph.domain:81/ /proxy;
+    # proxy_set_header    X-Script-Name           /proxy;
+#}
+# PostGREST Status and healt endpoint (/live and /ready)
+location /api/status/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:3001/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:3001/  /api/status/;
+    proxy_set_header    X-Script-Name            /api/status/;
+    add_header Access-Control-Allow-Origin '*'; 
+    add_header Access-Control-Allow-Credentials true;
+}
+# PostGREST
+location /api/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:3000/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:3000/ /api;
+    proxy_set_header    X-Script-Name           /api;
+}
+# Custom api
+location /upload/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:3003/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:3003/ /upload;
+    proxy_set_header    X-Script-Name           /upload;
+}
+# Custom mediaserver
+location /resources/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:3004/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:3004/ /resources;
+    proxy_set_header    X-Script-Name           /resources;
+}
+# Custom GeoServer
+location /geo/ {
+    proxy_pass http://prisonweb02fl.unicph.domain:8084/;
+    proxy_redirect http://prisonweb02fl.unicph.domain:8084/ /geo;
+    proxy_set_header    X-Script-Name           /geo;
+}

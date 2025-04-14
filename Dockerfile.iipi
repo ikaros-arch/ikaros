@@ -1,0 +1,90 @@
+# Dockerfile for IKAROS node.js deployment
+# Based on work by Duke University Libraries (https://gitlab.oit.duke.edu/devops/containers/iipsrv ) under the GPLv3 license
+
+# Base stage
+# ---------------------------------------
+FROM debian:bookworm AS base
+
+ARG iipsrv_version="1.2"
+ARG iipsrv_commit="d978bfde03955150bbc9fee37836d3fa52763a7a"
+ARG iipsrv_sha256="ef7427b790f427654429aa2a198998f22df1026b9698746070ba400095033626"
+
+ENV IIPSRV_VERSION="${iipsrv_version}" \
+    IIPSRV_COMMIT="${iipsrv_commit}" \
+    IIPSRV_SHA256="${iipsrv_sha256}" \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    TZ=US/Eastern
+
+RUN apt -y update && \
+    apt -y install libtiff-dev libpng-dev libturbojpeg-dev libwebp-dev libmemcached-dev libopenjp2-7-dev nginx
+
+# Build stage
+# ---------------------------------------
+FROM base AS build
+
+RUN apt -y install \
+    autoconf \
+    autotools-dev \
+    curl \
+    g++ \
+    libtool \
+    make \
+    pkg-config
+
+WORKDIR /usr/src/iipsrv
+
+RUN set -eux; \
+    curl -sL -o iipsrv.tar.gz "https://github.com/ruven/iipsrv/archive/${IIPSRV_COMMIT}.tar.gz" ; \
+    echo "${IIPSRV_SHA256}  iipsrv.tar.gz" \
+      | sha256sum -c --strict ; \
+    tar -zxf iipsrv.tar.gz --strip-components=1 ; \
+    rm iipsrv.tar.gz; \
+    ./autogen.sh; \
+    ./configure; \
+    make
+
+# Deployment stage
+# ---------------------------------------
+FROM base
+
+#COPY nginx/sites-enabled/ /etc/nginx/sites-available/
+COPY --from=build /usr/src/iipsrv/src/iipsrv.fcgi /usr/local/bin/iipsrv.fcgi
+
+LABEL org.opencontainers.artifact.title="IIPImage Server"
+LABEL org.opencontainers.artifact.description="IIPImage Server built from source"
+LABEL org.opencontainers.image.source="https://gitlab.oit.duke.edu/devops/containers/iipsrv"
+LABEL org.opencontainers.image.version="${IIPSRV_VERSION}"
+LABEL org.opencontainers.image.revision="${IIPSRV_COMMIT}"
+LABEL org.opencontainers.image.vendor="Duke University Libraries"
+LABEL org.opencontainers.image.license="GPLv3"
+
+#
+# IIPImage Server variables
+# https://github.com/ruven/iipsrv#configuration
+#
+ENV LOGFILE=/dev/stdout \
+    # IIIF_VERSION defaults to 3 as of commit 9fa92880b6340e9caa3ba22e48a5c1e7bad64b39
+    IIIF_VERSION=2 \
+    VERBOSITY=1
+
+RUN apt -y install locales libgomp1 netcat-traditional; \
+    rm -rf /var/lib/apt/lists/*; \
+    echo "$LANG UTF-8" >> /etc/locale.gen; \
+    locale-gen $LANG; \
+#    useradd -r -g 0 iipsrv; \
+    mkdir -p -m 0444 /data
+
+
+#RUN nginx -t
+#RUN nginx -s reload
+
+#USER iipsrv
+
+VOLUME /data
+
+EXPOSE 8085
+
+# HEALTHCHECK CMD nc -z localhost 9000
+
+CMD [ "/bin/bash", "-c", "service nginx start;usr/local/bin/iipsrv.fcgi --bind 0.0.0.0:9000/" ]

@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Survey",
+            "Group": "Ikaros",
+            "Port": 5432,
+            "Username": "postgres",
+            "Host": "postgres",
+            "SSLMode": "prefer",
+	        "Comment": "This server is configured based on scripts/server.json found in the project's github repo. ",
+            "MaintenanceDB": "postgres"
+        }
+    }
+}

@@ -1,0 +1,394 @@
+services:
+  postgres:
+    container_name: db
+    profiles: ["db", "dev", "prod"]
+    image: ${POSTGRES_IMAGE:-postgis/postgis:16-3.4}
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres" ]
+      timeout: 45s
+      interval: 10s
+      retries: 3
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data:Z
+      - ./sql:/docker-entrypoint-initdb.d/:ro # Script to set up database schema and roles
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      AUTHENTICATOR_ROLE: ${PGRST_AUTH_ROLE}
+      AUTHENTICATOR_PASSWORD: ${PGRST_AUTH_PASSWORD}
+      ANONYMOUS_ROLE: ${PGRST_DB_ANON_ROLE}
+      API_SCHEMA: ${PGRST_DB_SCHEMA}
+    restart: unless-stopped
+    ports:
+      - ${POSTGRES_PORT}:5432
+    networks:
+      - ikaros-local
+
+  pgadmin:
+    container_name: pgadmin
+    profiles: ["db", "dev", "prod"]
+    image: "dpage/pgadmin4:latest"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/misc/ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+    volumes:
+      #      - ./pgadmin/config:/pgadmin4:Z
+      - ./pgadmin/data:/var/lib/pgadmin:Z
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_LOGIN_BANNER: ${PGADMIN_CONFIG_LOGIN_BANNER}
+      PGADMIN_CONFIG_SERVER_MODE: ${PGADMIN_CONFIG_SERVER_MODE}
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED:  ${PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED}
+      PGADMIN_CONFIG_AUTHENTICATION_SOURCES: ${PGADMIN_CONFIG_AUTHENTICATION_SOURCES}
+      PGADMIN_CONFIG_OAUTH2_AUTO_CREATE_USER: ${PGADMIN_CONFIG_OAUTH2_AUTO_CREATE_USER}
+      PGADMIN_CONFIG_OAUTH2_CONFIG: ${PGADMIN_CONFIG_OAUTH2_CONFIG}
+    command: 
+      - sh
+      - -c
+      - "echo '{\"Servers\": {\"1\": {\"Name\": \"Survey\", \"Group\": \"Ikaros\", \"Port\": \"${POSTGRES_PORT}\", \"Username\": \"${POSTGRES_USER}\", \"Host\": \"${POSTGRES_HOST}\", \"SSLMode\": \"prefer\", \"MaintenanceDB\": \"postgres\"}}}' > /pgadmin4/servers.json && /entrypoint.sh"
+    restart: unless-stopped
+    ports:
+      - ${PGADMIN_PORT}:80
+    networks:
+      - ikaros-local
+    depends_on:
+      - postgres
+
+  postgrest:
+    container_name: postgrest
+    profiles: ["api", "dev", "prod"]
+    image: postgrest/postgrest
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3001/ready"]
+      interval: 1m
+      timeout: 10s
+      retries: 3    
+    environment:
+      PGRST_DB_URI: ${PGRST_DB_URI}
+      PGRST_DB_SCHEMA: ${PGRST_DB_SCHEMA}
+      PGRST_DB_ANON_ROLE: ${PGRST_DB_ANON_ROLE}
+      PGRST_SERVER_PROXY_URI: ${PGRST_SERVER_PROXY_URI}
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET}
+      PGRST_ROLE_CLAIM_KEY: ${PGRST_ROLE_CLAIM_KEY}
+        # PGRST_LOG_LEVEL: info
+      PGPASSWORD: ${PGRST_AUTH_PASSWORD}
+      PGUSER: ${PGRST_AUTH_ROLE}
+      PGRST_ADMIN_SERVER_PORT: 3001
+    restart: unless-stopped
+    ports:
+      - ${PGRST_PORT}:3000
+      - ${PGRST_ADMIN_SERVER_PORT}:3001
+    networks:
+      - ikaros-local
+    depends_on:
+      - postgres 
+ 
+  keycloak:
+    container_name: keycloak
+    profiles: ["dev", "prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.kc
+      args:
+        KEYCLOAK_VERSION: 22.0.0
+    command: ['start', '--optimized']
+    environment:
+      JAVA_OPTS_APPEND: ${JAVA_OPTS_APPEND}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_URL: ${KC_DB_URL}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_HEALTH_ENABLED: ${KC_HEALTH_ENABLED}
+      #      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED}
+      KC_METRICS_ENABLED: ${KC_METRICS_ENABLED}
+      # KC_HOSTNAME: ${KC_HOSTNAME}
+      # KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT}
+      KC_HOSTNAME_URL: ${KC_HOSTNAME_URL}
+      #      KC_HOSTNAME_PATH: ${KC_HOSTNAME_PATH}
+      KC_HOSTNAME_ADMIN_URL: ${KC_HOSTNAME_ADMIN_URL}
+      #      KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH}
+      KC_PROXY: ${KC_PROXY}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT}
+      #      KC_HOSTNAME_STRICT_HTTPS: ${KC_HOSTNAME_STRICT_HTTPS}
+      #      KC_HOSTNAME_STRICT_BACKCHANNEL: ${KC_HOSTNAME_STRICT_BACKCHANNE}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    restart: unless-stopped      
+    ports:
+      - ${KC_PORT}:8080
+      - ${KC_DEBUG_PORT}:8787 # debug port
+    networks:
+      - ikaros-local
+    depends_on:
+      - postgres
+
+  iipimage:
+    container_name: iipimage
+    profiles: ["api", "dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile.iipi
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9000"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    environment:
+      - VERBOSITY=5
+      - BASE_URL=https://iiif.drosopoulou.net/
+      - FILESYSTEM_PREFIX=data/
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    volumes:
+      - /data/iiif:/data:z
+      - ./iipi-srv/sites-enabled/:/etc/nginx/sites-enabled/:Z
+    networks:
+      - ikaros-local
+
+  ikaros-dev:
+    container_name: ikaros-dev
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: ${IKAROS_DOCKERFILE}
+      target: development
+      args:
+        - VITE_DB_API=${IKAROS_DB_API}
+        - VITE_DOMAIN=${IKAROS_DEV_DOMAIN}
+        - VITE_MODULES=${IKAROS_MODULES}
+        - VITE_TITLE=${IKAROS_TITLE}
+        - VITE_APP=${IKAROS_APP:-survey}
+        - VITE_DESCRIPTION=${IKAROS_DESCRIPTION}
+        - VITE_ONLINE=${IKAROS_ONLINE:-true}
+        - VITE_KC_URL=${KC_HOSTNAME_URL}
+        - VITE_KC_REALM=${IKAROS_DEV_KC_REALM}
+        - VITE_KC_CLIENT=${IKAROS_DEV_KC_CLIENT}
+        - VITE_GEONAMES_API=${IKAROS_GEONAMES_API}
+        - WDS_SOCKET_PORT=${IKAROS_DEV_PORT}
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./app/public:/app/public:Z
+      - ./app/src:/app/src:Z
+    command: [sh, '-c', '/app/start.sh']
+    env_file: ./.env-dev
+    restart: unless-stopped
+    ports:
+      - ${IKAROS_DEV_PORT}:3000
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
+    networks:
+      - ikaros-local
+
+  ikaros-prod:
+    container_name: ikaros-prod
+    profiles: ["prod"]    
+    build:
+      context: .
+      dockerfile: ${IKAROS_DOCKERFILE}
+      target: production
+      args:
+        - VITE_DB_API=${IKAROS_DB_API}
+        - VITE_DOMAIN=${IKAROS_DOMAIN}
+        - VITE_MODULES=${IKAROS_MODULES}
+        - VITE_TITLE=${IKAROS_TITLE}
+        - VITE_APP=${IKAROS_APP:-survey}
+        - VITE_DESCRIPTION=${IKAROS_DESCRIPTION}
+        - VITE_ONLINE=${IKAROS_ONLINE:-true}
+        - VITE_KC_URL=${KC_HOSTNAME_URL}
+        - VITE_KC_REALM=${IKAROS_PROD_KC_REALM}
+        - VITE_KC_CLIENT=${IKAROS_PROD_KC_CLIENT}
+        - VITE_GEONAMES_API=${IKAROS_GEONAMES_API}
+    healthcheck:
+      test: ["CMD", "wget", "--header", "X-Health-Check: true", "--spider", "-q", "http://localhost/"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    command: [nginx, '-g', 'daemon off;']
+    env_file: ./.env-prod
+    restart: unless-stopped
+    ports:
+      - ${IKAROS_PROD_PORT}:80
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
+    networks:
+      - ikaros-local
+
+  npm:
+    container_name: nginxproxymanager
+    profiles: ["api", "prod"]
+    image: 'jc21/nginx-proxy-manager:latest'
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./nginx-data:/data:Z
+      - ./letsencrypt:/etc/letsencrypt:Z
+    restart: unless-stopped
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - ${NPM_HTTP}:80 # Public HTTP Port
+      - ${NPM_HTTPS}:443 # Public HTTPS Port
+      - ${NPM_ADMIN}:81  # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+    # Uncomment the next line if you uncomment anything in the section
+    # environment:
+      # Uncomment this if you want to change the location of
+      # the SQLite DB file within the container
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
+    networks:
+      - ikaros-local
+
+  gitops-webhook:
+    container_name: webhook
+    profiles: ["api", "dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile.webhook
+    command: ["node", "webhook-handler.js"]
+    restart: unless-stopped
+    volumes:
+      - ./:/app/project_root/:z
+    ports:
+      - ${WEBHOOK_PORT}:3000
+    networks:
+      - ikaros-local
+
+  storage-api:
+    container_name: storage-api
+    profiles: ["api", "dev", "prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.storageapi
+    environment:
+      - STORAGE_TYPE=local
+      - STORAGE_PATH=/files
+    volumes:
+      - /data:/files:z
+    ports:
+      - ${API_PORT}:80
+    networks:
+      - ikaros-local
+
+  mediaserver:
+    container_name: mediaserver
+    profiles: ["api", "dev", "prod"]
+    build:
+      context: .
+      dockerfile: ${MEDIASERVER_DOCKERFILE}
+      target: production 
+    #healthcheck:
+      #test: ["CMD", "wget", "--header", "X-Health-Check: true", "--spider", "-q", "http://localhost/"]
+      #interval: 30s
+      #timeout: 10s
+      #retries: 3
+      #start_period: 5s    
+    volumes:
+      - /data:/files:z
+      - ./mediaserver/3dhop:/app/3dhop:Z
+      - ./mediaserver/index.js:/app/index.js:Z
+      - ./mediaserver/start.sh:/app/start.sh:Z
+    restart: unless-stopped
+    ports:
+      - ${MEDIASERVER_PORT}:3001
+    command: [sh, '-c', '/app/start.sh']
+    env_file: ./.env-prod
+    networks:
+      - ikaros-local
+
+  geoserver:
+    container_name: geoserver
+    profiles: ["api", "dev"]
+    image: docker.osgeo.org/geoserver:2.24.1
+    healthcheck:
+      test: curl --fail "http://localhost:8080/geoserver/web/wicket/resource/org.geoserver.web.GeoServerBasePage/img/logo.png" || exit 1
+      interval: 1m
+      retries: 3
+      timeout: 20s
+    ports:
+      - "8084:8080"
+    environment:
+      - INSTALL_EXTENSIONS=true
+      - STABLE_EXTENSIONS=wps,csw
+      - EXTRA_JAVA_OPTS=-Xms1G -Xmx2G
+      - SKIP_DEMO_DATA=true
+      - PROXY_BASE_URL=https://${IKAROS_DOMAIN}/geo/
+      - GEOSERVER_USER=admin
+      - GEOSERVER_PASSWORD=geoserver
+    volumes:
+      - /data/geo:/opt/geoserver_data/:Z
+      - ./geoserver/additional_libs:/opt/additional_libs:Z # by mounting this we can install libs from host on startup
+
+  otterwiki:
+    container_name: wiki
+    profiles: ["keros"]
+    image: redimp/otterwiki:2
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s    
+    restart: unless-stopped
+    ports:
+      - 8086:80
+    volumes:
+      - /data/wiki:/app-data:Z
+    networks:
+      - ikaros-local
+
+  postgres-backup:
+    container_name: postgres-backup
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_HOURLY: ${BACKUP_RETENTION_HOURLY}
+      BACKUP_RETENTION_DAILY: ${BACKUP_RETENTION_DAILY}
+      BACKUP_RETENTION_WEEKLY: ${BACKUP_RETENTION_WEEKLY}
+      BACKUP_RETENTION_MONTHLY: ${BACKUP_RETENTION_MONTHLY}
+      RESTORE_DB_DAILY: ${RESTORE_DB_DAILY}
+      RESTORE_DB_WEEKLY: ${RESTORE_DB_WEEKLY}
+      BACKUP_DATABASES: ${BACKUP_DATABASES}
+      RESTORE_DATABASE: ${RESTORE_DATABASE}
+    volumes:
+      - /data/backups:/backups:Z
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - ikaros-local
+
+networks:
+  ikaros-local:
+    name: ikaros-local
+    driver: bridge
+
+volumes:
+  postgres_data:
+    external: true

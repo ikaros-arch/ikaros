@@ -1,0 +1,12 @@
+FROM postgres:16
+
+RUN apt-get update && apt-get install -y cron && rm -rf /var/lib/apt/lists/*
+
+COPY scripts/backup/backup.sh /usr/local/bin/backup.sh
+RUN chmod +x /usr/local/bin/backup.sh
+
+COPY scripts/backup/crontab /etc/cron.d/postgres-backup
+RUN chmod 0644 /etc/cron.d/postgres-backup && crontab /etc/cron.d/postgres-backup
+RUN sed -i '/session    required     pam_loginuid.so/c\#session    required   pam_loginuid.so' /etc/pam.d/cron
+
+CMD ["cron", "-f"]

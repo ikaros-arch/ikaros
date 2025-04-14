@@ -1,0 +1,218 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation  } from 'react-router-dom';
+import { useStore } from 'services/store';
+import Grid from '@mui/material/Grid2';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardActionArea from '@mui/material/CardActionArea';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import HideImageIcon from '@mui/icons-material/HideImage';
+import RecordedPositionMap from 'components/PositionMap';
+import useCrudActions from 'components/CrudActions';
+import CrudButtons from 'components/CrudButtons';
+import { 
+  OpenTable,  
+  GetLocation
+ } from 'components/Buttons';
+import Autocomplete from '@mui/material/Autocomplete';
+import { 
+  handleAutocompleteChange, 
+} from 'helpers/buttonActions';
+import TableDrawer from 'components/layout/TableDrawer';
+
+// Define the mapping between path prefixes and corresponding Zustand selector hooks.
+const storeSelectorsMap = {
+  '/surv_tract/': (state) => ({
+    parentData: state.currTract,
+    setParentData: state.setCurrTract,
+  }),
+  '/surv_scape/': (state) => ({
+    parentData: state.currScape,
+    setParentData: state.setCurrScape,
+  }),
+  '/surv_feature/': (state) => ({
+    parentData: state.currFeat,
+    setParentData: state.setCurrFeat,
+  }),
+  '/surv_line/': (state) => ({
+    parentData: state.currLine,
+    setParentData: state.setCurrLine,
+  }),
+};
+
+const SurveyPhoto = () => {
+  console.log("Render SurveyPhoto")
+  const currData = useStore(state => state.currPhoto);
+  const setCurrData = useStore(state => state.setCurrPhoto);  
+  const [tract, setTract] = useState('');
+  const [position, setPosition] = useState(null);
+  const walkers = useStore(state => state.walker);
+
+
+  const [error, setError] = useState(false);
+  
+  const handleInputChange = event => {
+    const { value } = event.target;
+    
+    // Check if value is a number and is exactly 4 digits
+    if (!/^\d{4}$/.test(value)) {
+      setError(true);
+    } else {
+      setError(false);
+    }
+    
+    setTract(value);
+  };  
+  const navigate = useNavigate();
+  const location = useLocation();
+
+
+  // Find the matching selector for the current path.
+  const storePath = Object.keys(storeSelectorsMap).find((parent) =>
+    location.pathname.startsWith(parent)
+  );
+
+  // Use the matching selector from the path-to-hook map, or use a default selector that returns undefineds.
+  const selector = storePath
+    ? storeSelectorsMap[storePath]
+    : () => ({ parentData: null, setParentData: null });
+
+  // Use the selected hook.
+  const { parentData, setParentData } = useStore(selector);
+
+  const handlePress = (target) => {
+    navigate(target);
+  };
+
+  return (
+    <>
+      <TableDrawer 
+        apiTable={'list_media'}
+        setSelectedRowUUID={setCurrData}
+      />       
+      <Grid container spacing={1} padding={1} sx={{ paddingTop: '22px' }}>
+        <Grid xs={12} order={{ xs: 5, sm: 4 }}>
+          <Typography gutterBottom variant="body" component="p">
+            Photo id: sadfjksdfnwodfnowuinf, Record N of Y, created DD/MM/YYYY
+          </Typography>        
+        </Grid>
+        <Grid xs={6} sm={3} md={3} lg={2} order={{ xs: 5, sm: 4 }}>            
+          <TextField
+            label="Photo ID"
+            variant="outlined"
+            id="photoId"
+            name="photoId"
+            value={tract} // controlled input value
+            onChange={handleInputChange} // input change handler
+          />   
+        </Grid>
+        <Grid xs={6} sm={3} md={3} lg={2} order={{xs: 4, sm: 5 }}>
+          <Card >
+            <CardActionArea>
+              <CardContent onClick={() => handlePress('/surv_menu')}>
+                <AddAPhotoIcon sx={{ fontSize: 60 }} />
+                <Typography gutterBottom variant="h5" component="p">
+                  Capture
+                </Typography>                  
+              </CardContent>
+            </CardActionArea>
+          </Card>  
+        </Grid>
+        <Grid xs={6} sm={3} md={3} lg={2} order={{xs: 4, sm: 5 }}>
+          <GetLocation 
+            currData={currData}
+            setCurrData={setCurrData}
+          />
+        </Grid>                
+        <Grid xs={6} sm={3} md={3} lg={2} order={{xs: 5, sm: 4 }}>
+          <RecordedPositionMap position={position} />
+        </Grid>
+        <Grid xs={6} sm={4} order={{ xs: 6 }}>
+          <Autocomplete
+            style={{ flex: 1 }}
+            disablePortal
+            id="photographer"
+            options={walkers}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option.value === value.value}              
+            value={currData ? walkers.find(option => option.value === currData.photographer_uuid) || null : null}
+            onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'photographer_uuid', currData, setCurrData)}
+            renderInput={(params) => <TextField {...params} label="Photographer" />}
+          />
+        </Grid>      
+        <Grid xs={12} order={{ xs: 6 }}>        
+          <TextField
+            label="Photo Description"
+            variant="outlined"
+            id="tract_descr"
+            name="tract_descr"
+            multiline
+            fullWidth              
+            rows={4}
+            value={tract} // controlled input value
+            onChange={handleInputChange} // input change handler
+          />       
+        </Grid>
+        <Grid xs={12} order={{ xs: 6 }}>        
+          <TextField
+            label="Filename"
+            variant="outlined"
+            id="photoFilename"
+            name="photoFilename"
+            fullWidth              
+            value={tract} // controlled input value
+            onChange={handleInputChange} // input change handler
+          />       
+        </Grid>                             
+        <Grid xs={12} order={{ xs: 6 }}>    
+        </Grid>     
+        <Grid xs={6} sm={3} md={3} lg={2} order={{ xs: 7 }}>
+          <Card >
+            <CardActionArea>
+              <CardContent 
+                onClick={() => handlePress('/surv_menu')} >
+                <AddPhotoAlternateIcon sx={{ fontSize: 60 }} />
+                <Typography gutterBottom variant="h5" component="p">
+                  Add another
+                </Typography>                  
+              </CardContent>
+            </CardActionArea>
+          </Card>        
+        </Grid>
+        <Grid xs={6} sm={3} md={3} lg={4} order={{ xs: 8, sm: 7 }}>
+          <Card >
+            <CardActionArea>
+              <CardContent onClick={() => handlePress('/surv_tract')}>
+                <NavigateBeforeIcon sx={{ fontSize: 60 }} />
+                <Typography gutterBottom variant="h5" component="p">
+                  Back to recording
+                </Typography>                 
+              </CardContent>
+            </CardActionArea>
+          </Card> 
+        </Grid>   
+        <Grid xs={6} sm={3} md={3} lg={4} order={{ xs: 8, sm: 7 }}>
+          <OpenTable /> 
+        </Grid>                 
+        <Grid xs={6} sm={3} md={3} lg={2} order={{ xs: 7, sm: 8 }}>
+          <Card >
+            <CardActionArea>
+              <CardContent onClick={() => handlePress('/surv_menu')}>
+                <HideImageIcon sx={{ fontSize: 60 }} />
+                <Typography gutterBottom variant="h5" component="p">
+                  Cancel current
+                </Typography>                 
+              </CardContent>
+            </CardActionArea>
+          </Card>  
+        </Grid>          
+      </Grid>
+    </>
+  );
+};
+
+export default SurveyPhoto;
