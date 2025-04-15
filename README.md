@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/966406357.svg)](https://doi.org/10.5281/zenodo.15219180)
+
+
 # ikaros-recording
 
 Source and full dev and prod environment consosting of:
