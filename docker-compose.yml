@@ -169,6 +169,7 @@ services:
         - VITE_KC_REALM=${IKAROS_DEV_KC_REALM}
         - VITE_KC_CLIENT=${IKAROS_DEV_KC_CLIENT}
         - VITE_GEONAMES_API=${IKAROS_GEONAMES_API}
+        - VITE_GOOGLE_API=${IKAROS_GOOGLE_API}
         - WDS_SOCKET_PORT=${IKAROS_DEV_PORT}
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck.sh"]
@@ -210,6 +211,7 @@ services:
         - VITE_KC_REALM=${IKAROS_PROD_KC_REALM}
         - VITE_KC_CLIENT=${IKAROS_PROD_KC_CLIENT}
         - VITE_GEONAMES_API=${IKAROS_GEONAMES_API}
+        - VITE_GOOGLE_API=${IKAROS_GOOGLE_API}
     healthcheck:
       test: ["CMD", "wget", "--header", "X-Health-Check: true", "--spider", "-q", "http://localhost/"]
       interval: 1m
