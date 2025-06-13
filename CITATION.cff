@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+title: >-
+  The Ikaros Recording Platform for Archaeology and Cultural
+  Heritage applications
+message: Please cite this software using these metadata.
+type: software
+authors:
+  - given-names: Hallvard Rübner
+    family-names: Indgjerd
+    orcid: 'https://orcid.org/0000-0003-3572-3033'
+  - name: Indgjerd Archaeological Consulting
+    country: 'NO'
+    city: Oslo
+    website: 'https://ikarosarchaeology.com/'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15219180
+repository-code: 'https://github.com/ikaros-arch/ikaros'
+abstract: >-
+  The Ikaros Recording Platform is a containerised full
+  stack application for digital recording of archaeological
+  field work (survey and excavation data), with a growing
+  number of additional modules for other Cultural Heritage
+  applications, including museum design, historical datasets
+  and petrografic data. It aims to facilitate rapid data
+  flow and flexible recording options for all data types
+  generated in a project.
+keywords:
+  - Archaeology
+  - Cultural Heritage
+  - Digital Recording
+license: GPL-3.0-or-later
