@@ -2,7 +2,7 @@ cff-version: 1.2.0
 title: >-
   The Ikaros Recording Platform for Archaeology and Cultural
   Heritage applications
-message: Please cite this software using these metadata.
+message: Please cite this software using these metadata, or version-specific citations available at https://zenodo.org/records/15219181
 type: software
 authors:
   - given-names: Hallvard Rübner
